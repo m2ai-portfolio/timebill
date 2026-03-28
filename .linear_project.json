@@ -1,0 +1,31 @@
+{
+  "initialized": true,
+  "created_at": "2026-03-28T05:15:49Z",
+  "team_id": "488a02b5-c546-4242-95fb-bf6caf038fa1",
+  "team_key": "M2A",
+  "team_name": "M2AI_Workspace",
+  "project_id": "9b27c53a-96d5-4104-ba0b-c07f62b5b342",
+  "project_name": "TimeBill",
+  "project_slug": "0e381556878b",
+  "project_url": "https://linear.app/m2ai-workspace/project/timebill-0e381556878b",
+  "total_issues": 3,
+  "issues": [
+    {
+      "id": "M2A-550",
+      "title": "Passive Project Detection",
+      "status": "backlog"
+    },
+    {
+      "id": "M2A-551",
+      "title": "Idle-Based Time Accounting",
+      "status": "backlog"
+    },
+    {
+      "id": "M2A-555",
+      "title": "Local Encrypted Storage",
+      "status": "backlog"
+    }
+  ],
+  "meta_issue_id": "M2A-557",
+  "notes": "All issues successfully created"
+}
