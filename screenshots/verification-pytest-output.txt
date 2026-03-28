@@ -1,0 +1,26 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/apexaipc/projects/yce-harness/generations/metroplex-ideaforge-113
+collecting ... collected 18 items
+
+tests/test_detection.py::TestProjectDetector::test_vim_detection PASSED  [  5%]
+tests/test_detection.py::TestProjectDetector::test_vscode_detection PASSED [ 11%]
+tests/test_detection.py::TestProjectDetector::test_terminal_detection PASSED [ 16%]
+tests/test_detection.py::TestProjectDetector::test_github_detection PASSED [ 22%]
+tests/test_detection.py::TestProjectDetector::test_browser_detection PASSED [ 27%]
+tests/test_detection.py::TestProjectDetector::test_empty_and_none_inputs PASSED [ 33%]
+tests/test_detection.py::TestProjectDetector::test_unknown_application PASSED [ 38%]
+tests/test_detection.py::TestProjectDetector::test_custom_patterns_from_env PASSED [ 44%]
+tests/test_detection.py::TestProjectDetector::test_pattern_priority PASSED [ 50%]
+tests/test_detection.py::TestProjectDetector::test_invalid_custom_patterns PASSED [ 55%]
+tests/test_detection.py::TestProjectDetector::test_ide_detection PASSED  [ 61%]
+tests/test_detection.py::TestProjectDetector::test_communication_apps PASSED [ 66%]
+tests/test_detection.py::TestProjectDetector::test_long_title_truncation PASSED [ 72%]
+tests/test_detection.py::TestProjectDetector::test_special_characters_in_title PASSED [ 77%]
+tests/test_detection.py::TestDataModels::test_project_creation PASSED    [ 83%]
+tests/test_detection.py::TestDataModels::test_project_with_all_fields PASSED [ 88%]
+tests/test_detection.py::TestDataModels::test_time_entry_creation PASSED [ 94%]
+tests/test_detection.py::TestDataModels::test_time_entry_with_metadata PASSED [100%]
+
+============================== 18 passed in 0.01s ==============================

@@ -1,0 +1,221 @@
+================================================================================
+                          TIMEBILL - IMPLEMENTATION REPORT
+                     M2A-530: Passive Project Detection Feature
+================================================================================
+
+PROJECT: TimeBill - Automatic Time Tracking Application
+ISSUE:   M2A-530
+TITLE:   Passive Project Detection
+DATE:    2026-03-27
+STATUS:  ✓ COMPLETED - ALL TESTS PASSING
+
+================================================================================
+                              IMPLEMENTATION SUMMARY
+================================================================================
+
+FEATURE DESCRIPTION:
+  Implement project detection that infers the active project from the
+  foreground window title, IDE status bar, or browser tab name without
+  requiring user input.
+
+KEY COMPONENTS IMPLEMENTED:
+  1. ProjectDetector class with detect_from_title() method
+  2. Project and TimeEntry dataclass models
+  3. Built-in pattern recognition for 25+ applications
+  4. Custom pattern support via TIMEBILL_PROJECT_DETECTION env var
+  5. GitHub repository name extraction
+  6. Comprehensive test suite (18 unit tests)
+
+================================================================================
+                           REQUIRED TEST RESULTS
+================================================================================
+
+TEST 1: VIM DETECTION
+  Command:  python -c "from timebill.agent.detection import ProjectDetector;
+                       d = ProjectDetector();
+                       print(d.detect_from_title('vim - project.py'))"
+  Expected: Project name string
+  Result:   "Vim Editing"
+  Status:   ✓ PASS
+
+TEST 2: GITHUB DETECTION
+  Command:  python -c "from timebill.agent.detection import ProjectDetector;
+                       d = ProjectDetector();
+                       print(d.detect_from_title('GitHub - acme/api'))"
+  Expected: Project name string
+  Result:   "GitHub: acme/api"
+  Status:   ✓ PASS
+
+TEST 3: PROJECT MODEL
+  Command:  python -c "from timebill.data.models import Project;
+                       p = Project(name='Test');
+                       print(p.name)"
+  Expected: "Test"
+  Result:   "Test"
+  Status:   ✓ PASS
+
+TEST 4: PYTEST SUITE
+  Command:  python -m pytest tests/ -v -k test_detection
+  Expected: All tests pass
+  Result:   18 tests passed in 0.02s
+  Status:   ✓ PASS
+
+================================================================================
+                         COMPREHENSIVE TEST COVERAGE
+================================================================================
+
+UNIT TESTS (18 TOTAL):
+  ✓ test_vim_detection                      - Vim editor detection
+  ✓ test_vscode_detection                   - VS Code detection
+  ✓ test_terminal_detection                 - Terminal detection
+  ✓ test_github_detection                   - GitHub repo extraction
+  ✓ test_browser_detection                  - Browser detection
+  ✓ test_empty_and_none_inputs              - Edge case handling
+  ✓ test_unknown_application                - Fallback behavior
+  ✓ test_custom_patterns_from_env           - Env var patterns
+  ✓ test_pattern_priority                   - Pattern precedence
+  ✓ test_invalid_custom_patterns            - Error handling
+  ✓ test_ide_detection                      - Multiple IDE support
+  ✓ test_communication_apps                 - Comm app detection
+  ✓ test_long_title_truncation              - Long title handling
+  ✓ test_special_characters_in_title        - Special char handling
+  ✓ test_project_creation                   - Project model
+  ✓ test_project_with_all_fields            - Full Project model
+  ✓ test_time_entry_creation                - TimeEntry model
+  ✓ test_time_entry_with_metadata           - TimeEntry with metadata
+
+DETECTION EXAMPLES:
+  Window Title                              Detected Project
+  ────────────────────────────────────────  ──────────────────────────────
+  vim - project.py                       →  Vim Editing
+  Visual Studio Code - main.py           →  VS Code Development
+  PyCharm - test.py                      →  PyCharm Development
+  Terminal - bash                        →  Terminal Activity
+  GitHub - acme/api                      →  GitHub: acme/api
+  github.com/user/repo - PR              →  GitHub: user/repo
+  Google Chrome - New Tab                →  Chrome Browsing
+  Slack - team-channel                   →  Slack Communication
+  Zoom Meeting                           →  Zoom Meeting
+
+================================================================================
+                              FILES CREATED
+================================================================================
+
+CORE APPLICATION:
+  timebill/__init__.py                      Package initialization
+  timebill/__main__.py                      Module entry point
+  timebill/timebill.py                      CLI entry point
+
+AGENT MODULE:
+  timebill/agent/__init__.py                Agent package init
+  timebill/agent/detection.py               ★ Main detection logic
+  timebill/agent/storage.py                 Placeholder for future
+
+DATA MODULE:
+  timebill/data/__init__.py                 Data package init
+  timebill/data/models.py                   ★ Project & TimeEntry models
+  timebill/data/storage.py                  Placeholder for future
+
+TEST SUITE:
+  tests/__init__.py                         Test package init
+  tests/test_detection.py                   ★ Comprehensive test suite
+
+EVIDENCE:
+  screenshots/M2A-530-test-results.txt      Test execution output
+  screenshots/M2A-530-feature-verification.txt  Feature verification
+  screenshots/M2A-530-implementation-summary.txt  This summary
+
+================================================================================
+                          TECHNICAL IMPLEMENTATION
+================================================================================
+
+PATTERN MATCHING:
+  - Regex-based window title pattern recognition
+  - 25+ built-in patterns for common applications
+  - Capture groups for dynamic project name extraction (GitHub repos)
+  - Case-insensitive matching
+  - Custom pattern support via environment variable
+
+DATA MODELS:
+  - Standard library dataclasses (no third-party dependencies)
+  - Type hints for IDE support
+  - Optional fields with sensible defaults
+  - Dict metadata field for extensibility
+
+ENVIRONMENT VARIABLE SUPPORT:
+  Format: TIMEBILL_PROJECT_DETECTION="pattern1:ProjectName1,pattern2:Name2"
+  Example: TIMEBILL_PROJECT_DETECTION="myapp:My App,test:Test Project"
+  - Custom patterns override built-in patterns
+  - Invalid patterns are silently ignored
+  - Supports regex patterns
+
+ERROR HANDLING:
+  - Graceful handling of None/empty inputs
+  - Returns "Unknown Project" for unmatched titles
+  - Fallback to first words of title if no pattern matches
+  - Invalid custom patterns don't crash the detector
+
+================================================================================
+                            CONSTRAINTS MET
+================================================================================
+
+✓ Python 3.11+ (tested on Python 3.12.3)
+✓ Standard library only (no third-party packages except pytest)
+✓ No pydantic (uses dataclasses)
+✓ Cross-platform compatible (pure Python)
+✓ All 4 required test steps pass
+✓ Comprehensive test coverage (18 tests)
+✓ Clean project structure (no temp files)
+✓ Environment variable support
+✓ Robust error handling
+
+================================================================================
+                              VERIFICATION
+================================================================================
+
+FEATURE WORKING: YES
+TESTS PASSING:   18/18 (100%)
+CODE QUALITY:    Clean, well-documented, type-hinted
+DEPENDENCIES:    Standard library only (pytest for testing)
+
+SMOKE TEST RESULTS:
+  ✓ ProjectDetector instantiates correctly
+  ✓ detect_from_title() returns valid strings
+  ✓ GitHub repo extraction works correctly
+  ✓ Custom patterns load from environment
+  ✓ Project model creates successfully
+  ✓ TimeEntry model creates successfully
+  ✓ All edge cases handled gracefully
+
+================================================================================
+                           NEXT ITERATION READY
+================================================================================
+
+FOUNDATION ESTABLISHED FOR:
+  - Idle-Based Time Accounting (M2A-531)
+  - Local Encrypted Storage (M2A-532)
+  - Agent event loop integration
+  - Real-time window title monitoring
+
+PLACEHOLDERS READY:
+  - timebill/agent/storage.py (for agent-level storage)
+  - timebill/data/storage.py (for SQLite implementation)
+
+================================================================================
+                              CONCLUSION
+================================================================================
+
+The Passive Project Detection feature is FULLY IMPLEMENTED and TESTED.
+All requirements have been met, all tests pass, and the codebase is ready
+for the next feature iteration.
+
+Project detection is working correctly with support for:
+  • 25+ built-in application patterns
+  • GitHub repository name extraction
+  • Custom pattern configuration
+  • Robust fallback handling
+  • Standard library dataclass models
+
+ISSUE M2A-530: READY FOR REVIEW AND COMPLETION
+
+================================================================================

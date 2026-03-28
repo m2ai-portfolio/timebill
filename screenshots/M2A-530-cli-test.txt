@@ -1,0 +1,3 @@
+TimeBill agent starting...
+Passive project detection enabled.
+Press Ctrl+C to stop.
