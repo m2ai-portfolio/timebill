@@ -1,0 +1,3 @@
+Entries: 1
+Project: MyProject
+Duration: 1000000

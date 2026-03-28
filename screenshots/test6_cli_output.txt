@@ -1,0 +1,12 @@
+Test 1 - No args:
+Exit code: 1
+Output: Usage: python -m timebill agent
+
+
+Test 2 - Agent command:
+Exit code: 0
+Output: TimeBill agent starting...
+Passive project detection enabled.
+Idle-based time tracking enabled (idle threshold: 300s).
+Press Ctrl+C to stop.
+

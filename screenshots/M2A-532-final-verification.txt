@@ -1,0 +1,6 @@
+Required test (len(projects) > 0): True
+Encryption test (data is encrypted): True
+Time entry test (entry saved and retrieved): True
+Filter test (filtering by project works): True
+
+All tests passed: True
