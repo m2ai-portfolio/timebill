@@ -1,0 +1,117 @@
+=============================================================================
+TimeBill QA Regression Test Results
+=============================================================================
+Date: 2026-03-27
+Project: TimeBill - Automatic Time Tracker
+Features Tested:
+- Feature 2 (NEW): Idle-Based Time Accounting (M2A-531)
+- Feature 1 (EXISTING): Passive Project Detection (M2A-530)
+
+=============================================================================
+TEST 1: Full pytest Suite (39 tests)
+=============================================================================
+Command: python3 -m pytest tests/ -v
+Status: PASS
+Result: 39 passed in 5.08s
+
+Details:
+- 21 accounting tests: ALL PASSED
+- 18 detection tests: ALL PASSED
+
+=============================================================================
+TEST 2a: Feature 2 - Start Tracking
+=============================================================================
+Command: Start tracking for TestProject and verify TimeEntry creation
+Status: PASS
+
+Output:
+Tracking: TestProject
+Has start time: True
+Current duration > 0: False
+
+Analysis: 
+- TimeTracker successfully initialized
+- Project tracking started successfully
+- Start timestamp recorded
+- Duration is 0 initially (expected - no time elapsed yet)
+
+=============================================================================
+TEST 2b: Feature 2 - Idle Detection
+=============================================================================
+Command: Test idle detection after configurable timeout (1 second)
+Status: PASS
+
+Output:
+Is idle: True
+Duration > 0: True
+
+Analysis:
+- TimeTracker initialized with custom idle_seconds=1
+- Project tracking started
+- After 1.5 second sleep, correctly detected idle state
+- Duration tracking continues even during idle (expected)
+
+=============================================================================
+TEST 2c: Feature 2 - Stop Tracking with Completed Entry
+=============================================================================
+Command: Stop tracking and verify completed TimeEntry is created
+Status: PASS
+
+Output:
+Entries: 1
+Has end_ts: True
+Duration > 0: True
+
+Analysis:
+- Tracking started and ran for 100ms
+- stop_tracking() successfully created a completed TimeEntry
+- Entry has valid end_ts timestamp
+- Entry has positive duration_ms value
+- Entry properly stored in tracker entries list
+
+=============================================================================
+TEST 3: Feature 1 Regression - Project Detection
+=============================================================================
+Command: Test project detection from various window titles
+Status: PASS
+
+Output:
+vim: Vim Editing
+vscode: VS Code Development
+github: GitHub: acme/api
+
+Analysis:
+- ProjectDetector successfully identifies Vim sessions
+- ProjectDetector successfully identifies VS Code projects
+- ProjectDetector successfully identifies GitHub repositories
+- All detection patterns working as expected
+- No regression detected
+
+=============================================================================
+TEST 4: CLI Entry Point
+=============================================================================
+Command: python3 -m timebill agent
+Status: PASS
+
+Output:
+TimeBill agent starting...
+Passive project detection enabled.
+Idle-based time tracking enabled (idle threshold: 300s).
+Press Ctrl+C to stop.
+
+Analysis:
+- CLI module entry point works correctly
+- Agent command properly recognized
+- Configuration messages displayed correctly
+- Default idle threshold (300s) loaded from environment
+
+=============================================================================
+SUMMARY
+=============================================================================
+regression_test: PASS
+
+All 39 tests passing. No regressions detected.
+Feature 2 implementation verified and working correctly.
+Existing features remain fully functional.
+
+=============================================================================

@@ -1,0 +1,47 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/apexaipc/projects/yce-harness/generations/metroplex-ideaforge-113
+collecting ... collected 39 items
+
+tests/test_accounting.py::TestTimeTracker::test_initialization_default PASSED [  2%]
+tests/test_accounting.py::TestTimeTracker::test_initialization_custom_idle PASSED [  5%]
+tests/test_accounting.py::TestTimeTracker::test_initialization_from_env PASSED [  7%]
+tests/test_accounting.py::TestTimeTracker::test_start_tracking PASSED    [ 10%]
+tests/test_accounting.py::TestTimeTracker::test_stop_tracking_returns_entry PASSED [ 12%]
+tests/test_accounting.py::TestTimeTracker::test_stop_tracking_without_start_returns_none PASSED [ 15%]
+tests/test_accounting.py::TestTimeTracker::test_duration_calculation PASSED [ 17%]
+tests/test_accounting.py::TestTimeTracker::test_get_current_duration_ms_active PASSED [ 20%]
+tests/test_accounting.py::TestTimeTracker::test_get_current_duration_ms_inactive PASSED [ 23%]
+tests/test_accounting.py::TestTimeTracker::test_is_idle_initially_true PASSED [ 25%]
+tests/test_accounting.py::TestTimeTracker::test_is_idle_after_activity PASSED [ 28%]
+tests/test_accounting.py::TestTimeTracker::test_is_idle_after_threshold PASSED [ 30%]
+tests/test_accounting.py::TestTimeTracker::test_record_activity_resets_idle PASSED [ 33%]
+tests/test_accounting.py::TestTimeTracker::test_multiple_project_switching PASSED [ 35%]
+tests/test_accounting.py::TestTimeTracker::test_automatic_stop_on_new_start PASSED [ 38%]
+tests/test_accounting.py::TestTimeTracker::test_get_entries_returns_copy PASSED [ 41%]
+tests/test_accounting.py::TestTimeTracker::test_get_entries_accumulates PASSED [ 43%]
+tests/test_accounting.py::TestTimeTracker::test_entry_timestamps_are_integers PASSED [ 46%]
+tests/test_accounting.py::TestTimeTracker::test_entry_end_after_start PASSED [ 48%]
+tests/test_accounting.py::TestTimeTracker::test_idle_threshold_zero PASSED [ 51%]
+tests/test_accounting.py::TestTimeTracker::test_multiple_record_activity_calls PASSED [ 53%]
+tests/test_detection.py::TestProjectDetector::test_vim_detection PASSED  [ 56%]
+tests/test_detection.py::TestProjectDetector::test_vscode_detection PASSED [ 58%]
+tests/test_detection.py::TestProjectDetector::test_terminal_detection PASSED [ 61%]
+tests/test_detection.py::TestProjectDetector::test_github_detection PASSED [ 64%]
+tests/test_detection.py::TestProjectDetector::test_browser_detection PASSED [ 66%]
+tests/test_detection.py::TestProjectDetector::test_empty_and_none_inputs PASSED [ 69%]
+tests/test_detection.py::TestProjectDetector::test_unknown_application PASSED [ 71%]
+tests/test_detection.py::TestProjectDetector::test_custom_patterns_from_env PASSED [ 74%]
+tests/test_detection.py::TestProjectDetector::test_pattern_priority PASSED [ 76%]
+tests/test_detection.py::TestProjectDetector::test_invalid_custom_patterns PASSED [ 79%]
+tests/test_detection.py::TestProjectDetector::test_ide_detection PASSED  [ 82%]
+tests/test_detection.py::TestProjectDetector::test_communication_apps PASSED [ 84%]
+tests/test_detection.py::TestProjectDetector::test_long_title_truncation PASSED [ 87%]
+tests/test_detection.py::TestProjectDetector::test_special_characters_in_title PASSED [ 89%]
+tests/test_detection.py::TestDataModels::test_project_creation PASSED    [ 92%]
+tests/test_detection.py::TestDataModels::test_project_with_all_fields PASSED [ 94%]
+tests/test_detection.py::TestDataModels::test_time_entry_creation PASSED [ 97%]
+tests/test_detection.py::TestDataModels::test_time_entry_with_metadata PASSED [100%]
+
+============================== 39 passed in 5.06s ==============================
