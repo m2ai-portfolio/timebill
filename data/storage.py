@@ -1,28 +1,41 @@
 """Storage module for TimeBill.
 
 Provides SQLite-based storage with JSON fallback for persisting projects and time entries.
+Supports optional encryption of sensitive data using AES-256-like encryption.
 """
 
 import json
 import sqlite3
 import os
+import base64
 from typing import List, Optional
 from data.models import Project, TimeEntry
+from data.encryption import derive_key, encrypt_string, decrypt_string
 
 
 class Storage:
-    """Storage class that uses SQLite as primary storage with JSON fallback."""
+    """Storage class that uses SQLite as primary storage with JSON fallback.
 
-    def __init__(self, db_path: str = "./data/timebill.db"):
+    Supports optional encryption of sensitive data (descriptions, metadata).
+    """
+
+    def __init__(self, db_path: str = "./data/timebill.db", encrypted: bool = False):
         """Initialize storage.
 
         Args:
             db_path: Path to SQLite database file
+            encrypted: If True, encrypt sensitive data before storing
         """
         self.db_path = db_path
         self.connection = None
         self.use_json_fallback = False
         self.json_data = {"projects": [], "time_entries": []}
+        self.encrypted = encrypted
+        self.encryption_key = None
+
+        # Derive encryption key if encryption is enabled
+        if self.encrypted:
+            self.encryption_key = derive_key()
 
         # Try to initialize SQLite
         try:
@@ -85,10 +98,17 @@ class Storage:
     def _save_project_sqlite(self, project: Project):
         """Save project to SQLite database."""
         cursor = self.connection.cursor()
+
+        # Encrypt description if encryption is enabled
+        description = project.description
+        if self.encrypted and description:
+            encrypted_bytes = encrypt_string(description, self.encryption_key)
+            description = base64.b64encode(encrypted_bytes).decode('ascii')
+
         cursor.execute("""
             INSERT OR REPLACE INTO projects (name, description, color)
             VALUES (?, ?, ?)
-        """, (project.name, project.description, project.color))
+        """, (project.name, description, project.color))
         self.connection.commit()
 
     def _save_project_json(self, project: Project):
@@ -98,10 +118,17 @@ class Storage:
             p for p in self.json_data["projects"]
             if p["name"] != project.name
         ]
+
+        # Encrypt description if encryption is enabled
+        description = project.description
+        if self.encrypted and description:
+            encrypted_bytes = encrypt_string(description, self.encryption_key)
+            description = base64.b64encode(encrypted_bytes).decode('ascii')
+
         # Add new/updated project
         self.json_data["projects"].append({
             "name": project.name,
-            "description": project.description,
+            "description": description,
             "color": project.color
         })
 
@@ -120,6 +147,12 @@ class Storage:
         """Save time entry to SQLite database."""
         cursor = self.connection.cursor()
         metadata_json = json.dumps(entry.metadata) if entry.metadata else None
+
+        # Encrypt metadata if encryption is enabled
+        if self.encrypted and metadata_json:
+            encrypted_bytes = encrypt_string(metadata_json, self.encryption_key)
+            metadata_json = base64.b64encode(encrypted_bytes).decode('ascii')
+
         cursor.execute("""
             INSERT INTO time_entries (project_name, start_ts, end_ts, duration_ms, metadata)
             VALUES (?, ?, ?, ?, ?)
@@ -128,12 +161,20 @@ class Storage:
 
     def _save_time_entry_json(self, entry: TimeEntry):
         """Save time entry to JSON fallback storage."""
+        metadata = entry.metadata
+
+        # Encrypt metadata if encryption is enabled
+        if self.encrypted and metadata:
+            metadata_json = json.dumps(metadata)
+            encrypted_bytes = encrypt_string(metadata_json, self.encryption_key)
+            metadata = base64.b64encode(encrypted_bytes).decode('ascii')
+
         self.json_data["time_entries"].append({
             "project_name": entry.project_name,
             "start_ts": entry.start_ts,
             "end_ts": entry.end_ts,
             "duration_ms": entry.duration_ms,
-            "metadata": entry.metadata
+            "metadata": metadata
         })
 
     def get_projects(self) -> List[Project]:
@@ -152,14 +193,42 @@ class Storage:
         cursor = self.connection.cursor()
         cursor.execute("SELECT name, description, color FROM projects")
         rows = cursor.fetchall()
-        return [Project(name=row[0], description=row[1], color=row[2]) for row in rows]
+
+        projects = []
+        for row in rows:
+            description = row[1]
+
+            # Decrypt description if encryption is enabled
+            if self.encrypted and description:
+                try:
+                    encrypted_bytes = base64.b64decode(description)
+                    description = decrypt_string(encrypted_bytes, self.encryption_key)
+                except Exception:
+                    # If decryption fails, keep original (might be unencrypted legacy data)
+                    pass
+
+            projects.append(Project(name=row[0], description=description, color=row[2]))
+
+        return projects
 
     def _get_projects_json(self) -> List[Project]:
         """Get all projects from JSON fallback storage."""
-        return [
-            Project(name=p["name"], description=p["description"], color=p["color"])
-            for p in self.json_data["projects"]
-        ]
+        projects = []
+        for p in self.json_data["projects"]:
+            description = p["description"]
+
+            # Decrypt description if encryption is enabled
+            if self.encrypted and description:
+                try:
+                    encrypted_bytes = base64.b64decode(description)
+                    description = decrypt_string(encrypted_bytes, self.encryption_key)
+                except Exception:
+                    # If decryption fails, keep original (might be unencrypted legacy data)
+                    pass
+
+            projects.append(Project(name=p["name"], description=description, color=p["color"]))
+
+        return projects
 
     def get_time_entries(self, project_name: Optional[str] = None) -> List[TimeEntry]:
         """Get time entries, optionally filtered by project name.
@@ -194,7 +263,19 @@ class Storage:
         rows = cursor.fetchall()
         entries = []
         for row in rows:
-            metadata = json.loads(row[4]) if row[4] else {}
+            metadata_str = row[4]
+
+            # Decrypt metadata if encryption is enabled
+            if self.encrypted and metadata_str:
+                try:
+                    encrypted_bytes = base64.b64decode(metadata_str)
+                    metadata_str = decrypt_string(encrypted_bytes, self.encryption_key)
+                except Exception:
+                    # If decryption fails, try to parse as plain JSON (legacy data)
+                    pass
+
+            metadata = json.loads(metadata_str) if metadata_str else {}
+
             entries.append(TimeEntry(
                 project_name=row[0],
                 start_ts=row[1],
@@ -209,16 +290,30 @@ class Storage:
         entries = self.json_data["time_entries"]
         if project_name:
             entries = [e for e in entries if e["project_name"] == project_name]
-        return [
-            TimeEntry(
+
+        result = []
+        for e in entries:
+            metadata = e.get("metadata", {})
+
+            # Decrypt metadata if encryption is enabled
+            if self.encrypted and metadata and isinstance(metadata, str):
+                try:
+                    encrypted_bytes = base64.b64decode(metadata)
+                    metadata_str = decrypt_string(encrypted_bytes, self.encryption_key)
+                    metadata = json.loads(metadata_str)
+                except Exception:
+                    # If decryption fails, keep original
+                    pass
+
+            result.append(TimeEntry(
                 project_name=e["project_name"],
                 start_ts=e["start_ts"],
                 end_ts=e["end_ts"],
                 duration_ms=e["duration_ms"],
-                metadata=e.get("metadata", {})
-            )
-            for e in entries
-        ]
+                metadata=metadata
+            ))
+
+        return result
 
     def close(self):
         """Close the database connection."""

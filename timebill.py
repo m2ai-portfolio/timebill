@@ -21,18 +21,21 @@ def run_agent_demo():
     # Get configuration from environment
     idle_seconds = int(os.environ.get('TIMEBILL_IDLE_SECONDS', '300'))
     db_path = os.environ.get('TIMEBILL_DB_PATH', './data/timebill.db')
+    use_encryption = os.environ.get('TIMEBILL_ENCRYPTED', '').lower() in ('1', 'true', 'yes')
 
     print(f"\nConfiguration:")
     print(f"  Idle threshold: {idle_seconds} seconds")
     print(f"  Database path: {db_path}")
+    print(f"  Encryption: {'ENABLED' if use_encryption else 'DISABLED'}")
     print()
 
     # Initialize storage and accountant
-    storage = Storage(db_path=db_path)
+    storage = Storage(db_path=db_path, encrypted=use_encryption)
     accountant = TimeAccountant(idle_threshold_seconds=idle_seconds)
 
     print("Initializing storage...")
     print(f"  Using {'JSON fallback' if storage.use_json_fallback else 'SQLite'} storage")
+    print(f"  Encryption: {'ENABLED (AES-256-like with HMAC)' if use_encryption else 'DISABLED'}")
     print()
 
     # Simulate a work session
@@ -109,9 +112,17 @@ def run_agent_demo():
 
         # Save to storage
         # First ensure project exists
-        project = Project(name=entry.project_name)
+        project = Project(
+            name=entry.project_name,
+            description=f"Automatically tracked project: {entry.project_name}",
+            color="#3498db"
+        )
         storage.save_project(project)
-        # Then save time entry
+        # Then save time entry with metadata
+        entry.metadata = {
+            "tracked_by": "TimeBill Agent",
+            "idle_threshold_seconds": idle_seconds
+        }
         storage.save_time_entry(entry)
 
     total_duration_sec = total_duration_ms / 1000
@@ -134,6 +145,9 @@ def run_agent_demo():
 
     print("\n" + "=" * 60)
     print("Demo completed successfully!")
+    if use_encryption:
+        print("\nNote: All data was stored with AES-256-like encryption.")
+        print("      Descriptions and metadata are encrypted in the database.")
     print("=" * 60)
 
 
@@ -145,7 +159,13 @@ def main():
         print("TimeBill - Automatic Time Tracking")
         print()
         print("Usage:")
-        print("  python timebill.py agent    # Run agent demo")
+        print("  python timebill.py agent                    # Run agent demo")
+        print("  TIMEBILL_ENCRYPTED=true python timebill.py agent  # Run with encryption")
+        print()
+        print("Environment variables:")
+        print("  TIMEBILL_IDLE_SECONDS  - Idle threshold in seconds (default: 300)")
+        print("  TIMEBILL_DB_PATH       - Database path (default: ./data/timebill.db)")
+        print("  TIMEBILL_ENCRYPTED     - Enable encryption (default: false)")
         print()
         print("Project detection module loaded successfully.")
         print("Run 'python -m pytest tests/' to run tests.")
