@@ -1,102 +1,135 @@
 
 
-# TimeBill  
-![Python >=3.11](https://img.shields.io/badge/python-3.11%2B-blue)  
-![License MIT](https://img.shields.io/badge/license-MIT-green)
+<p align="center">
+  <img src="assets/infographic.png" alt="TimeBill" width="800">
+</p>
 
+<h3 align="center">Automatic time tracking app that detects what project you're working on from your terminal, IDE, and browser activity.</h3>
 
-## Overview  
-TimeBill is an automatic time‑tracking application that infers the project you're working on from terminal activity, IDE focus, and browser‑tab changes. It runs entirely on the developer’s machine, stores data locally in a SQLite database (or in‑memory JSON), and requires no internet connection. Target users are freelancers, consultants, agencies, and contractors who bill by the hour and need a hands‑free way to capture billable time.
+<p align="center">
+  <a href="#quick-start">Quick Start</a> &bull;
+  <a href="#features">Features</a> &bull;
+  <a href="#examples">Examples</a> &bull;
+  <a href="#contributing">Contributing</a>
+</p>
 
-## Problem Statement  
-Freelancers and consultants currently log billable hours manually with spreadsheets or forms—a tedious, error‑prone process that is often delayed until invoicing, resulting in lost revenue and unnecessary admin overhead.
+## What is this?
+TimeBill is a locally‑run, offline time‑tracker that watches your active window, IDE status, and browser tabs to infer the project you’re billing for and records the duration automatically. It’s aimed at freelancers, consultants, and contractors who need accurate billable hours without manual logs.
 
-## Features  
-- **Passive Project Detection** – Infers the active project from window titles, IDE status bars, or browser tab names without user input.  
-- **Idle‑Based Time Accounting** – Starts tracking on user activity and stops accruing time after a configurable period of inactivity.  
-- **Local, Encrypted Storage** – Persists project‑to‑seconds mappings in SQLite (AES‑256 encrypted with a machine‑specific key) or holds them in‑memory JSON; all work is offline.  
-- **Minimal System‑Tray / Menu‑Bar UI** – Provides a simple icon for start/stop and settings; no Electron or web front‑end.  
-- **Cross‑Platform, Pure Python** – Works on Windows, macOS, and Linux using only the standard library and a few optional native‑accessibility helpers.
-
-## Tech Stack  
-- **Language:** Python 3.11+  
-- **Testing:** pytest  
-- **Packaging:** setuptools (optional)  
-- **Database:** SQLite (bundled) + SQLAlchemy‑lite wrapper or plain sqlite3 module; in‑memory JSON fallback  
-- **Security:** libsodium‑based AES‑256 (via `pynacl` or pure‑python fallback) for local encryption  
-- **OS Interaction:**  
-  - Windows: `ctypes` + Win32 accessibility APIs  
-  - macOS: `pyobjc` / `Quartz` for window title access  
-  - Linux: `dbus` + `Xorg`/`wnck` or `gtk` for active window detection  
-- **Build / CI:** None required beyond running the test suite
-
-## Quick Start / Installation  
-
-1. **Clone the repository**  
-   ```bash
-   git clone <repo‑url>
-   cd <repo‑dir>
-   ```
-
-2. **Ensure Python 3.11+ is installed**  
-   ```bash
-   python --version   # should show 3.11 or higher
-   ```
-
-3. **(Optional) Install in development mode**  
-   ```bash
-   pip install -e .
-   ```
-   *The project has no third‑party runtime dependencies beyond the standard library; the step mainly makes the `timebill` module importable.*
-
-4. **Run the agent**  
-   ```bash
-   python -m timebill agent
-   ```
-   The agent will appear as a tray/menu‑bar icon and begin tracking automatically. Press `Ctrl+C` in the terminal to stop it.
-
-## Usage  
-
-- **Start tracking** – Launch the agent as shown above; it begins accruing time as soon as you interact with an IDE, terminal, or browser.  
-- **Change idle timeout** – Set the environment variable before launching:  
-  ```bash
-  export TIMEBILL_IDLE_SECONDS=600   # 10 minutes
-  python -m timebill agent
-  ```
-- **Specify storage location** – Override the default SQLite path:  
-  ```bash
-  export TIMEBILL_DB_PATH=$HOME/.timebill/timebill.db
-  python -m timebill agent
-  ```
-- **View a quick summary** – After stopping the agent, a report is printed to stdout showing total seconds per project:  
-  ```
-  Total tracked time:
-    Website Redesign: 7200s
-    API Development: 3600s
-  ```
-- **Run the test suite** – Verify the core logic:  
-  ```bash
-  pytest -q
-  ```
-
-## Architecture  
-
-```
-[User] <--(focus/idle events)--> [Agent Core] <--(local storage)--> [Encrypted SQLite/JSON]
+Example:
+```bash
+$ python -m timebill agent
+[INFO] Started TimeBill agent
+[INFO] Detected project: Vim Editing
+[INFO] Tracking started at 1628450123000
 ```
 
-- **Agent Core** (single process) consists of three cooperating modules:  
-  - `detection.py` – Receives OS focus events, determines the active project name.  
-  - `accounting.py` – Starts/stops timers based on idle thresholds, accumulates `duration_ms`.  
-  - `storage.py` – Writes `Project` and `TimeEntry` records to SQLite (AES‑256 encrypted) or holds them in‑memory JSON.  
-- A thin **system‑tray / menu‑bar** layer (built with `tkinter` or `rumps`/`pystray` depending on platform) provides start/stop controls and a settings dialog.  
-- All components run in‑process; no external services, message queues, or network calls are involved, guaranteeing offline operation.  
-- Data model follows the Pydantic definitions in `data/models.py` (`Project`, `TimeEntry`).  
+## Problem
+Freelancers and consultants manually log billable hours using spreadsheets or forms, which is tedious, error‑prone, and often forgotten until invoicing time. This leads to lost revenue and administrative overhead that takes away from actual client work.
 
-## License  
+## Features
+| Feature | Description |
+|---|---|
+| Passive Project Detection | Infers the active project from window titles, IDE status bars, or browser tab names without user input. |
+| Idle‑Based Time Accounting | Starts tracking on user activity and stops after a configurable period of inactivity (default 5 min). |
+| Local Encrypted Storage | Saves project‑to‑second mappings in a SQLite file encrypted with AES‑256 using a machine‑specific key. |
+| Cross‑Platform Offline Operation | Pure Python 3.11+ code runs on Windows, macOS, and Linux with no network calls. |
+| Minimal System‑Tray UI | Provides a tiny icon that opens a settings dialog and shows current session time on hover. |
+| Configurable Detection Rules | Allows custom keywords or regex patterns via `TIMEBILL_PROJECT_DETECTION` to refine project inference. |
 
-MIT License  
+## Quick Start
+1. Clone the repository:  
+   ```bash
+   git clone https://github.com/yourname/TimeBill.git
+   cd TimeBill
+   ```
+2. Ensure Python 3.11+ is installed (no external dependencies required).  
+3. Run the agent:  
+   ```bash
+   $ python -m timebill agent
+   [INFO] Started TimeBill agent
+   [INFO] Detected project: Default
+   ```
+4. Optionally set environment variables (e.g., `TIMEBILL_IDLE_SECONDS=120`) before step 3.
 
-Copyright (c) 2025 TimeBill Contributors  
+## Examples
+**Basic tracking with IDE**  
+```bash
+$ python -m timebill agent
+[INFO] Started TimeBill agent
+[INFO] Detected project: Vim Editing
+[INFO] Tracking started at 1628450123000
+# Switch to a VSCode window titled “MyApp – src/main.py”
+[INFO] Detected project: MyApp Development
+[INFO] Tracking switched to MyApp Development at 1628450500000
+```
 
-Permission is hereby granted, free of charge, to any person obtaining a copy… (see the full `LICENSE` file for details).
+**Idle detection stops tracking**  
+```bash
+$ export TIMEBILL_IDLE_SECONDS=60
+$ python -m timebill agent
+[INFO] Started TimeBill agent
+[INFO] Detected project: Browser Research
+[INFO] Tracking started at 1628451000000
+# No mouse or keyboard input for 70 seconds
+[INFO] Idle threshold reached – stopping accrual for Browser Research
+[INFO] Session elapsed: 00:01:10
+```
+
+**Exporting data after shutdown**  
+```bash
+$ python -m timebill agent &
+# Work for a few minutes, then press Ctrl+C
+[INFO] Received shutdown signal
+[INFO] Exporting data to ./data/timebill.db
+[INFO] Shutdown complete
+$ sqlite3 ./data/timebill.db "SELECT name FROM Project;"
+Vim Editing
+MyApp Development
+Browser Research
+$ sqlite3 ./data/timebill.db "SELECT project_name, duration_ms FROM TimeEntry;"
+Vim Editing|120000
+MyApp Development|300000
+Browser Research|90000
+```
+
+## File Structure
+```
+TimeBill/
+├── agent/               # Core detection and accounting logic
+│   ├── detection.py
+│   ├── accounting.py
+│   └── __init__.py
+├── data/                # Models, storage, encryption helpers
+│   ├── models.py
+│   ├── storage.py
+│   └── encryption.py
+├── tests/               # Unit test suite
+│   ├── test_detection.py
+│   ├── test_accounting.py
+│   ├── test_storage.py
+│   └── test_encryption.py
+├── assets/              # Icons and graphics
+│   └── infographic.png
+├── timebill.py          # CLI entry point (python -m timebill agent)
+├── README.md
+└── .gitignore
+```
+
+## Tech Stack
+| Technology | Purpose |
+|---|---|
+| Python 3.11+ | Core language and runtime |
+| SQLite (built‑in) | Persistent storage of projects and time entries |
+| hashlib / secrets | AES‑256 key derivation and encryption (OS UUID) |
+| pytest | Running unit tests |
+| setuptools (optional) | Packaging and distribution |
+
+## Contributing
+Fork the repo, make changes, run `pytest` locally, then submit a pull request. Please keep new features to a single iteration and update tests accordingly.
+
+## License
+MIT
+
+## Author
+Matthew Snow -- [M2AI](https://m2ai.co) | [@m2ai-portfolio](https://github.com/m2ai-portfolio)
