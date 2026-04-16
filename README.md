@@ -13,123 +13,118 @@
   <a href="#contributing">Contributing</a>
 </p>
 
-## What is this?
-TimeBill is a locally‑run, offline time‑tracker that watches your active window, IDE status, and browser tabs to infer the project you’re billing for and records the duration automatically. It’s aimed at freelancers, consultants, and contractors who need accurate billable hours without manual logs.
+TimeBill automatically logs billable hours by monitoring your active windows, IDE status, and browser tabs, then stores the data locally so you can generate invoices without manual entry. It's ideal for freelancers, consultants, and agencies who bill by the hour.
 
-Example:
-```bash
+```
 $ python -m timebill agent
-[INFO] Started TimeBill agent
-[INFO] Detected project: Vim Editing
-[INFO] Tracking started at 1628450123000
+[INFO] Started agent. Monitoring active windows.
+[INFO] Detected project: API Development (browser: Chrome)
+[INFO] Idle threshold: 300s
 ```
 
-## Problem
 Freelancers and consultants manually log billable hours using spreadsheets or forms, which is tedious, error‑prone, and often forgotten until invoicing time. This leads to lost revenue and administrative overhead that takes away from actual client work.
 
-## Features
 | Feature | Description |
 |---|---|
-| Passive Project Detection | Infers the active project from window titles, IDE status bars, or browser tab names without user input. |
-| Idle‑Based Time Accounting | Starts tracking on user activity and stops after a configurable period of inactivity (default 5 min). |
-| Local Encrypted Storage | Saves project‑to‑second mappings in a SQLite file encrypted with AES‑256 using a machine‑specific key. |
-| Cross‑Platform Offline Operation | Pure Python 3.11+ code runs on Windows, macOS, and Linux with no network calls. |
-| Minimal System‑Tray UI | Provides a tiny icon that opens a settings dialog and shows current session time on hover. |
-| Configurable Detection Rules | Allows custom keywords or regex patterns via `TIMEBILL_PROJECT_DETECTION` to refine project inference. |
+| Passive Project Detection | Infers the active project from foreground window title, IDE status bar, or browser tab name without user input. |
+| Idle‑Based Time Accounting | Starts tracking when the user becomes active and stops after a configurable period of inactivity (default 5 minutes). |
+| Local Encrypted Storage | Persists project‑to‑seconds mappings in a SQLite database (`timebill.db`) encrypted with AES‑256 using a machine‑specific key. |
+| Cross‑Platform Minimal UI | Provides a system‑tray / menu‑bar icon that opens a simple settings dialog; no web front‑end or Electron wrapper. |
+| Offline‑Only Operation | All processing (focus detection, idle timing, storage, encryption) runs locally; no internet connectivity required. |
+| Configurable Idle Timeout | Adjust the period of inactivity before tracking stops via the `TIMEBILL_IDLE_SECONDS` environment variable. |
+| Project‑Keyword Detection | Optionally supply a comma‑separated list of keywords or regex patterns via `TIMEBILL_PROJECT_DETECTION` to refine project inference. |
+| SQLite/JSON Fallback | Stores data in SQLite by default; can fall back to in‑memory JSON if the database file cannot be created. |
 
-## Quick Start
+**Quick Start**
+
 1. Clone the repository:  
-   ```bash
-   git clone https://github.com/yourname/TimeBill.git
-   cd TimeBill
-   ```
-2. Ensure Python 3.11+ is installed (no external dependencies required).  
-3. Run the agent:  
-   ```bash
-   $ python -m timebill agent
-   [INFO] Started TimeBill agent
-   [INFO] Detected project: Default
-   ```
-4. Optionally set environment variables (e.g., `TIMEBILL_IDLE_SECONDS=120`) before step 3.
+   `git clone https://github.com/yourusername/TimeBill.git`
+2. Navigate to the project directory:  
+   `cd TimeBill`
+3. Install the package in development mode:  
+   `pip install -e .`
+4. Run the agent:  
+   `python -m timebill agent`  
+   (Optional: set environment variables such as `TIMEBILL_IDLE_SECONDS=200` before the command.)
 
-## Examples
-**Basic tracking with IDE**  
-```bash
-$ python -m timebill agent
-[INFO] Started TimeBill agent
-[INFO] Detected project: Vim Editing
-[INFO] Tracking started at 1628450123000
-# Switch to a VSCode window titled “MyApp – src/main.py”
-[INFO] Detected project: MyApp Development
-[INFO] Tracking switched to MyApp Development at 1628450500000
+**Examples**
+
+**Detecting project from IDE**  
+Command:  
+`$ python -m timebill agent`  
+Output:  
+```
+[INFO] Started agent. Monitoring active windows.
+[INFO] Detected project: Web Development (IDE: VS Code)
+[INFO] Tracking started for project Web Development at 2025-09-16 10:12:03
 ```
 
-**Idle detection stops tracking**  
-```bash
-$ export TIMEBILL_IDLE_SECONDS=60
-$ python -m timebill agent
-[INFO] Started TimeBill agent
-[INFO] Detected project: Browser Research
-[INFO] Tracking started at 1628451000000
-# No mouse or keyboard input for 70 seconds
-[INFO] Idle threshold reached – stopping accrual for Browser Research
-[INFO] Session elapsed: 00:01:10
+**Using custom project keywords**  
+Command:  
+`$ TIMEBILL_PROJECT_DETECTION="react,node" python -m timebill agent`  
+Output:  
+```
+[INFO] Started agent. Monitoring active windows.
+[INFO] Detected project: Frontend Refactor (browser: Firefox - React devtools)
+[INFO] Tracking started for project Frontend Refactor at 2025-09-16 10:15:42
 ```
 
-**Exporting data after shutdown**  
-```bash
-$ python -m timebill agent &
-# Work for a few minutes, then press Ctrl+C
-[INFO] Received shutdown signal
-[INFO] Exporting data to ./data/timebill.db
-[INFO] Shutdown complete
-$ sqlite3 ./data/timebill.db "SELECT name FROM Project;"
-Vim Editing
-MyApp Development
-Browser Research
-$ sqlite3 ./data/timebill.db "SELECT project_name, duration_ms FROM TimeEntry;"
-Vim Editing|120000
-MyApp Development|300000
-Browser Research|90000
+**Viewing logged time via SQLite**  
+Command:  
+`$ sqlite3 data/timebill.db "SELECT p.name AS project, SUM(t.duration_ms)/60000.0 AS minutes FROM TimeEntry t JOIN Project p ON t.project_name = p.name GROUP BY p.name;"`  
+Output:  
+```
+project            | minutes
+-------------------|--------
+Web Development    | 125.5
+Frontend Refactor  |  78.0
+API Development    | 210.3
 ```
 
-## File Structure
+**File Structure**
+
 ```
 TimeBill/
-├── agent/               # Core detection and accounting logic
-│   ├── detection.py
-│   ├── accounting.py
-│   └── __init__.py
-├── data/                # Models, storage, encryption helpers
-│   ├── models.py
-│   ├── storage.py
-│   └── encryption.py
-├── tests/               # Unit test suite
-│   ├── test_detection.py
-│   ├── test_accounting.py
-│   ├── test_storage.py
-│   └── test_encryption.py
-├── assets/              # Icons and graphics
-│   └── infographic.png
-├── timebill.py          # CLI entry point (python -m timebill agent)
-├── README.md
-└── .gitignore
+  agent/               # Core detection, accounting, storage logic
+    __init__.py
+    detection.py
+    accounting.py
+    storage.py
+  data/                # Data models, encryption, persistence
+    __init__.py
+    models.py
+    storage.py
+    encryption.py
+  assets/              # Visual assets
+    infographic.png
+  tests/               # Unit test suite
+    test_accounting.py
+    test_detection.py
+    test_encryption.py
+    test_storage.py
+  timebill.py          # CLI entry point
+  README.md
+  .gitignore
 ```
 
-## Tech Stack
+**Tech Stack**
+
 | Technology | Purpose |
 |---|---|
 | Python 3.11+ | Core language and runtime |
-| SQLite (built‑in) | Persistent storage of projects and time entries |
-| hashlib / secrets | AES‑256 key derivation and encryption (OS UUID) |
-| pytest | Running unit tests |
-| setuptools (optional) | Packaging and distribution |
+| SQLite | Local persistent storage (or in‑memory JSON fallback) |
+| AES‑256 (via libsodium‑linked primitives) | Encryption of stored data |
+| pytest | Test framework |
+| setuptools | Packaging and distribution |
 
-## Contributing
-Fork the repo, make changes, run `pytest` locally, then submit a pull request. Please keep new features to a single iteration and update tests accordingly.
+**Contributing**
 
-## License
+Fork the repository, make your changes, run the test suite with `pytest`, and submit a pull request. Please keep changes focused and well‑tested.
+
+**License**
+
 MIT
 
-## Author
+**Author**
+
 Matthew Snow -- [M2AI](https://m2ai.co) | [@m2ai-portfolio](https://github.com/m2ai-portfolio)
